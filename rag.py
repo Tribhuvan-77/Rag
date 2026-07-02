@@ -21,7 +21,7 @@ def Load_File(filepath:str,filetype:str,query:str):
     docs=loader.load()
 
 
-    splitter=RecursiveCharacterTextSplitter(chunk_size=150,chunk_overlap=0)
+    splitter=RecursiveCharacterTextSplitter(chunk_size=800,chunk_overlap=0)
 
     chunks=splitter.split_documents(docs)
 
@@ -36,7 +36,7 @@ def Load_File(filepath:str,filetype:str,query:str):
 
    #  keys=vector_store.get().keys()
 
-    retriever=vector_store.as_retriever(search_type="mmr",search_kwargs={"k":3,"lambda_mult":0})
+    retriever=vector_store.as_retriever(search_type="mmr",search_kwargs={"k":5,"lambda_mult":0.5})
 
     results=retriever.invoke(query)
     for i in range(len(results)):
@@ -49,10 +49,18 @@ def Load_File(filepath:str,filetype:str,query:str):
     
     structured_llm=llm.with_structured_output(Valid_Response)
     query_prompt = """
-understand the context and Answer the user's question using only the provided context.
+You are a helpful AI assistant.
 
-      Context:{context}
-If the answer is not in the context, give a empty list for page numbers."""
+Understand the provided context carefully and answer the user's question using **only** the information in the context.
+
+- Do not use external knowledge or make assumptions.
+- If the answer is fully supported by the context, provide a clear and concise answer.
+- If the context does not contain enough information, state that the answer is not available in the provided context.
+- If the answer is not found, return an empty list for page numbers.
+- Include only the page numbers that directly support your answer. Do not guess or invent page numbers.
+
+Context:
+{context}"""
     template=ChatPromptTemplate.from_messages([("system",query_prompt),("user","{query}")])
     chain=template|structured_llm
 

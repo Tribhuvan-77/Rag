@@ -14,4 +14,4 @@ class Valid_File(BaseModel):
 
 class Valid_Response(BaseModel):
     answer:str
-    page_no:str
+    page_no:list[int]

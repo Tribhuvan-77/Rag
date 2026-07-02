@@ -49,7 +49,7 @@ def Load_File(filepath:str,filetype:str,query:str):
 Answer the user's question using only the provided context.
 
       Context:{context}
-If the answer is not in the context, say you don't know and page as not defined."""
+If the answer is not in the context, give a empty list for page numbers."""
     template=ChatPromptTemplate.from_messages([("system",query_prompt),("user","{query}")])
     chain=template|structured_llm
 

@@ -5,6 +5,7 @@ from schema import Valid_Response
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_core.prompts import ChatPromptTemplate
 from LLM import llm
+from uuid import uuid4
 
 def Load_File(filepath:str,filetype:str,query:str):
     if filetype==".pdf":
@@ -20,25 +21,27 @@ def Load_File(filepath:str,filetype:str,query:str):
     docs=loader.load()
 
 
-    splitter=RecursiveCharacterTextSplitter(chunk_size=300,chunk_overlap=100)
+    splitter=RecursiveCharacterTextSplitter(chunk_size=150,chunk_overlap=0)
 
     chunks=splitter.split_documents(docs)
 
     print(type(chunks[0]))
     embedding_model=HuggingFaceEmbeddings(model_name="BAAI/bge-small-en-v1.5")
 
-    vector_store=Chroma(embedding_function=embedding_model,persist_directory="chromadb",collection_name="rag")
-    
+    collection=str(uuid4())
+    vector_store=Chroma(embedding_function=embedding_model,persist_directory="chromadb",collection_name=collection)
+
     vector_store.add_documents(chunks)
+    print(vector_store._collection.count())
 
    #  keys=vector_store.get().keys()
 
-    retriever=vector_store.as_retriever(search_type="mmr",search_kwargs={"k":3,"lambda_mult":0.4})
+    retriever=vector_store.as_retriever(search_type="mmr",search_kwargs={"k":3,"lambda_mult":0})
 
     results=retriever.invoke(query)
-   #  for i in range(len(results)):
-   # #   print(f"{i}:{results[i].page_content}\n")
-   # #   print(f"{i}:{results[i].metadata}\n")
+    for i in range(len(results)):
+     print(f"{i}:{results[i].page_content}\n")
+     print(f"{i}:{results[i].metadata}\n")
     
     context=[]
     for i in results:
@@ -46,7 +49,7 @@ def Load_File(filepath:str,filetype:str,query:str):
     
     structured_llm=llm.with_structured_output(Valid_Response)
     query_prompt = """
-Answer the user's question using only the provided context.
+understand the context and Answer the user's question using only the provided context.
 
       Context:{context}
 If the answer is not in the context, give a empty list for page numbers."""
